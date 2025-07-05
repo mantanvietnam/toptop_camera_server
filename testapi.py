@@ -6,13 +6,13 @@ import urllib3
 # Vô hiệu hóa SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Cấu hình API - localhost
-API_BASE_URL = " https://python.topcam.ai.vn/api/student/list"
+# Cấu hình API - SỬA LẠI
+API_BASE_URL = "https://python.topcam.ai.vn/api"
 
 def test_health_check():
     """Kiểm tra trạng thái API"""
     try:
-        response = requests.get(f"{API_BASE_URL}/health")
+        response = requests.get(f"{API_BASE_URL}/health", verify=False)
         print("=== Health Check ===")
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.json()}")
@@ -28,14 +28,14 @@ def test_search_student():
     
     # Tìm theo tên
     response = requests.get(f"{API_BASE_URL}/student/search", 
-                          params={"name": "Trần Mạnh"})
+                          params={"name": "Trần Mạnh"}, verify=False)
     print(f"Search by name - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
     
     # Tìm theo ID
     response = requests.get(f"{API_BASE_URL}/student/search", 
-                          params={"id": "1"})
+                          params={"id": "1"}, verify=False)
     print(f"Search by ID - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
@@ -53,7 +53,7 @@ def test_update_vector():
     }
     
     response = requests.post(f"{API_BASE_URL}/student/update-vector", 
-                           json=data)
+                           json=data, verify=False)
     print(f"Update vector - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
@@ -62,7 +62,7 @@ def test_get_vector():
     """Test lấy vector"""
     print("=== Get Vector ===")
     
-    response = requests.get(f"{API_BASE_URL}/student/get-vector/1")
+    response = requests.get(f"{API_BASE_URL}/student/get-vector/1", verify=False)
     print(f"Get vector - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
@@ -83,7 +83,7 @@ def test_create_student():
     }
     
     response = requests.post(f"{API_BASE_URL}/student/create", 
-                           json=data)
+                           json=data, verify=False)
     print(f"Create student - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
@@ -92,7 +92,7 @@ def test_list_students():
     """Test lấy danh sách sinh viên"""
     print("=== List Students ===")
     
-    response = requests.get(f"{API_BASE_URL}/student/list")
+    response = requests.get(f"{API_BASE_URL}/student/list", verify=False)
     print(f"List students - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     print()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     print(f"API URL: {API_BASE_URL}")
     print("="*50)
     
-    # Test health check trước
+    # Test health check
     if not test_health_check():
         print("API không hoạt động. Vui lòng kiểm tra server.")
         exit(1)
