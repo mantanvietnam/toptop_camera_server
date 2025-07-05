@@ -350,5 +350,5 @@ if __name__ == '__main__':
     print("Starting Face Recognition API Server...")
     print(f"Database Host: {DB_CONFIG['host']}:{DB_CONFIG['port']}")
     print(f"Database: {DB_CONFIG['database']}")
-    print("Server running at: http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("Server running at: http://localhost:5002")
+    app.run(debug=True, host='0.0.0.0', port=5002)
