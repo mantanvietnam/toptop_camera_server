@@ -8,9 +8,9 @@ def encode_image_to_base64(path):
 url = 'http://localhost:5002/api/encode'
 
 payload = {
-    "image_front": encode_image_to_base64("front.jpg"),
-    "image_left": encode_image_to_base64("left.jpg"),
-    "image_right": encode_image_to_base64("right.jpg")
+    "image_front": encode_image_to_base64("test/front.jpg"),
+    "image_left": encode_image_to_base64("test/left.jpg"),
+    "image_right": encode_image_to_base64("test/right.jpg")
 }
 
 response = requests.post(url, json=payload)
