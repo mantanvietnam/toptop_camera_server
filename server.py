@@ -322,9 +322,9 @@ def get_student_vector(student_id):
 
 @app.route('/api/student/list', methods=['GET'])
 def list_students():
-    """Lấy danh sách tất cả học sinh"""
+    """Lấy toàn bộ thông tin tất cả học sinh"""
     try:
-        query = "SELECT id, full_name, code_student, phone, email, status, created_at FROM students"
+        query = "SELECT * FROM students"
         results = db_manager.execute_query(query)
         
         if results is None:
@@ -332,6 +332,12 @@ def list_students():
                 'success': False,
                 'message': 'Lỗi truy vấn database'
             }), 500
+        
+        # Chuyển vector_face về dạng list nếu có
+        for student in results:
+            if student['vector_face']:
+                vector = decode_string_to_vector(student['vector_face'])
+                student['vector_face'] = vector.tolist() if vector is not None else None
         
         return jsonify({
             'success': True,
