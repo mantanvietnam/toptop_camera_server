@@ -1,0 +1,6 @@
+flask
+opencv-python
+numpy
+insightface
+onnxruntime>=1.16.0
+onnxruntime-gpu>=1.16.0
