@@ -2,12 +2,18 @@ import requests
 import json
 import time
 import random
+from datetime import datetime
 
 SERVER_URL = "https://python.topcam.ai.vn/api/student/list"
 
 def fetch_students():
+    # Chỉ chạy trong khung giờ 1h–2h hoặc 13h–14h
+    now = datetime.now()
+    if not (now.hour == 1 or now.hour == 13):
+        print("Không nằm trong khung giờ cập nhật, dừng lại.")
+        return
+
     try:
-        # Đợi ngẫu nhiên từ 0 đến 1800 giây (0-30 phút)
         delay = random.randint(0, 1800)
         print(f"Đợi {delay} giây trước khi lấy danh sách...")
         time.sleep(delay)
