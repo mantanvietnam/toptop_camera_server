@@ -2,12 +2,33 @@ import requests
 import json
 import time
 import random
+import sqlite3
 from datetime import datetime
 
 SERVER_URL = "https://python.topcam.ai.vn/api/student/list"
+DB_FILE = "students_local.db"
+
+def save_to_sqlite(students):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY,
+            full_name TEXT,
+            vector_face TEXT
+        )
+    """)
+    c.execute("DELETE FROM students")
+    for s in students:
+        c.execute(
+            "INSERT INTO students (id, full_name, vector_face) VALUES (?, ?, ?)",
+            (s["id"], s["full_name"], json.dumps(s["vector_face"]))
+        )
+    conn.commit()
+    conn.close()
+    print(f"Đã lưu {len(students)} học sinh vào database local {DB_FILE}")
 
 def fetch_students():
-    # Chỉ chạy trong khung giờ 1h–2h hoặc 13h–14h
     now = datetime.now()
     if not (now.hour == 1 or now.hour == 13):
         print("Không nằm trong khung giờ cập nhật, dừng lại.")
@@ -35,9 +56,8 @@ def fetch_students():
             if s.get("id") and s.get("full_name")
         ]
 
-        with open("students_local.json", "w", encoding="utf-8") as f:
-            json.dump(filtered_students, f, ensure_ascii=False, indent=2)
-        print(f"Đã lưu {len(filtered_students)} học sinh vào students_local.json")
+        save_to_sqlite(filtered_students)
+
     except Exception as e:
         print("Lỗi khi lấy danh sách:", e)
 
