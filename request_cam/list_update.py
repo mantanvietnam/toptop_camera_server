@@ -80,9 +80,9 @@ def fetch_students():
 
     try:
         # Thêm một khoảng chờ ngẫu nhiên để tránh các request đồng thời
-        delay = random.randint(0, 1000)
-        print(f"Đợi {delay} giây trước khi lấy danh sách từ server...")
-        time.sleep(delay)
+        # delay = random.randint(0, 1000)
+        # print(f"Đợi {delay} giây trước khi lấy danh sách từ server...")
+        # time.sleep(delay)
 
         print(f"Đang kết nối tới server: {SERVER_URL}")
         response = requests.get(SERVER_URL, timeout=15)  # Tăng timeout

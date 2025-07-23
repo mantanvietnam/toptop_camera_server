@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 # Cấu hình database - CẬP NHẬT
 DB_CONFIG = {
-    'host': '0.0.0.0',
+    'host': '172.16.33.4',
     'port': 3306,
     'user': 'tranmanh_cameraai',
     'password': 'nWoNuPubC',
