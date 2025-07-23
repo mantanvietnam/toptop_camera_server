@@ -45,7 +45,7 @@ def encode_face_from_images():
         data = request.get_json()
         if not data:
             logger.warning("📭 Không có dữ liệu gửi lên.")
-            return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên'}), 400
+            return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 100}), 400
 
         images_base64 = [
             data.get('image_front'),
@@ -61,12 +61,12 @@ def encode_face_from_images():
 
             if not base64_str:
                 logger.warning(f"❌ Ảnh {direction} không hợp lệ (trống).")
-                return jsonify({'success': False, 'message': f'Ảnh thứ {idx+1} không hợp lệ, vui lòng tải lại.'}), 400
+                return jsonify({'success': False, 'message': f'Ảnh thứ {idx+1} không hợp lệ, vui lòng tải lại.', 'error_code': 101}), 400
 
             img = base64_to_image(base64_str)
             if img is None:
                 logger.warning(f"❌ Không đọc được ảnh {direction}.")
-                return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1}, vui lòng tải lại.'}), 400
+                return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1}, vui lòng tải lại.', 'error_code': 102}), 400
 
             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
 
@@ -74,7 +74,7 @@ def encode_face_from_images():
             if not faces or faces[0].det_score < 0.7:
                 score = faces[0].det_score if faces else 0
                 logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh {direction} (score: {score:.3f})")
-                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1}, vui lòng tải lại.'}), 400
+                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1}, vui lòng tải lại.', 'error_code': 103}), 400
 
             face = faces[0]
 
@@ -92,7 +92,7 @@ def encode_face_from_images():
 
     except Exception as e:
         logger.exception(f"🔥 Lỗi encode face: {e}")
-        return jsonify({'success': False, 'message': f'Lỗi server: {str(e)}'}), 500
+        return jsonify({'success': False, 'message': f'Lỗi server: {str(e)}', 'error_code': 500}), 500
 
 if __name__ == '__main__':
     logger.info("🚀 Face Encode API đang chạy tại http://0.0.0.0:5002")
