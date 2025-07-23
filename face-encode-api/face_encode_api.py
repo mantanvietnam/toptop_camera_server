@@ -38,7 +38,7 @@ def base64_to_image(base64_string):
         logger.error(f"❌ Lỗi giải mã base64: {e}")
         return None
 
-@app.route('/api/encode', methods=['POST'])
+@app.route('/api/face_vector_encode', methods=['POST'])
 def encode_face_from_images():
     """API nhận 3 ảnh base64 và trả về vector trung bình nếu hợp lệ"""
     try:
