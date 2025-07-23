@@ -88,7 +88,7 @@ def encode_face_from_images():
         return jsonify({
             'success': True,
             'vector': avg_vector.tolist()
-        })
+        }), 200
 
     except Exception as e:
         logger.exception(f"🔥 Lỗi encode face: {e}")
