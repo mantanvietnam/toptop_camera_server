@@ -1,18 +1,10 @@
 import requests
 import base64
-import cv2
-import numpy as np
+import json
 
-def encode_image_to_base64(path, resize_shape=(640, 480)):
-    img = cv2.imread(path)
-    if img is None:
-        raise FileNotFoundError(f"Không tìm thấy file: {path}")
-    # Resize ảnh
-    img = cv2.resize(img, resize_shape)
-    # Encode lại thành JPEG
-    _, buffer = cv2.imencode('.jpg', img)
-    img_bytes = buffer.tobytes()
-    return base64.b64encode(img_bytes).decode('utf-8')
+def encode_image_to_base64(path):
+    with open(path, 'rb') as f:
+        return base64.b64encode(f.read()).decode('utf-8')
 
 url = 'https://python.topcam.ai.vn/api/face_vector_encode'
 
@@ -21,11 +13,13 @@ payload = {
     "image_left": encode_image_to_base64("test/left.jpg"),
     "image_right": encode_image_to_base64("test/right.jpg")
 }
+with open("payload_debug.json", "w", encoding="utf-8") as f:
+    json.dump(payload, f)
 
+print("Payload đã được ghi ra file payload_debug.json")
 response = requests.post(url, json=payload)
 
-print("Status Code:", response.status_code)
-try:
+if response.status_code == 200:
     print("Response JSON:", response.json())
-except Exception:
-    print("Response Text:", response.text)
+else:
+    print("Error:", response.status_code, response.text)
