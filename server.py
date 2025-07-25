@@ -389,65 +389,64 @@ def encode_face_from_images_get():
 
 @app.route('/api/face_vector_encode', methods=['POST'])
 def encode_face_from_images():
-    return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
-#     """API nhận 3 ảnh base64 và trả về vector trung bình nếu hợp lệ"""
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             logger.warning("📭 Không có dữ liệu gửi lên (body rỗng hoặc sai định dạng).")
-#             return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
+    """API nhận 3 ảnh base64 và trả về vector trung bình nếu hợp lệ"""
+    try:
+        data = request.get_json()
+        if not data:
+            logger.warning("📭 Không có dữ liệu gửi lên (body rỗng hoặc sai định dạng).")
+            return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
 
-#         images_base64 = [
-#             data.get('image_front'),
-#             data.get('image_left'),
-#             data.get('image_right'),
-#         ]
-#         directions = ['front', 'left', 'right']
+        images_base64 = [
+            data.get('image_front'),
+            data.get('image_left'),
+            data.get('image_right'),
+        ]
+        directions = ['front', 'left', 'right']
 
-#         # Kiểm tra thiếu từng ảnh cụ thể
-#         missing = [directions[i] for i, img in enumerate(images_base64) if not img]
-#         if missing:
-#             logger.warning(f"❌ Thiếu ảnh đầu vào: {', '.join(missing)}.")
-#             return jsonify({
-#                 'success': False,
-#                 'message': f"Thiếu dữ liệu ảnh: {', '.join(missing)}. Vui lòng gửi đủ 3 ảnh.",
-#                 'error_code': 410
-#             }), 400
+        # Kiểm tra thiếu từng ảnh cụ thể
+        missing = [directions[i] for i, img in enumerate(images_base64) if not img]
+        if missing:
+            logger.warning(f"❌ Thiếu ảnh đầu vào: {', '.join(missing)}.")
+            return jsonify({
+                'success': False,
+                'message': f"Thiếu dữ liệu ảnh: {', '.join(missing)}. Vui lòng gửi đủ 3 ảnh.",
+                'error_code': 410
+            }), 400
 
-#         vectors = []
-#         for idx, base64_str in enumerate(images_base64):
-#             direction = directions[idx]
-#             logger.info(f"📥 Xử lý ảnh hướng: {direction.upper()}")
+        vectors = []
+        for idx, base64_str in enumerate(images_base64):
+            direction = directions[idx]
+            logger.info(f"📥 Xử lý ảnh hướng: {direction.upper()}")
 
-#             img = base64_to_image(base64_str)
-#             if img is None:
-#                 logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh).")
-#                 return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
+            img = base64_to_image(base64_str)
+            if img is None:
+                logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh).")
+                return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
 
-#             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
+            logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
 
-#             faces = face_app.get(img)
-#             if not faces or faces[0].det_score < 0.7:
-#                 score = faces[0].det_score if faces else 0
-#                 logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh {direction} (score: {score:.3f})")
-#                 return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 403}), 400
+            faces = face_app.get(img)
+            if not faces or faces[0].det_score < 0.7:
+                score = faces[0].det_score if faces else 0
+                logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh {direction} (score: {score:.3f})")
+                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 403}), 400
 
-#             face = faces[0]
-#             logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding...")
-#             vectors.append(face.embedding)
+            face = faces[0]
+            logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding...")
+            vectors.append(face.embedding)
 
-#         # Tính vector trung bình
-#         avg_vector = np.mean(vectors, axis=0)
-#         logger.info("✅ Đã tính xong vector trung bình.")
+        # Tính vector trung bình
+        avg_vector = np.mean(vectors, axis=0)
+        logger.info("✅ Đã tính xong vector trung bình.")
 
-#         return jsonify({
-#             'success': True,
-#             'vector': avg_vector.tolist()
-#         }), 200
+        return jsonify({
+            'success': True,
+            'vector': avg_vector.tolist()
+        }), 200
 
-    # except Exception as e:
-    #     logger.exception(f"🔥 Lỗi encode face: {e}")
-    #     return jsonify({'success': False, 'message': f'Lỗi server: {str(e)}', 'error_code': 500}), 500
+    except Exception as e:
+        logger.exception(f"🔥 Lỗi encode face: {e}")
+        return jsonify({'success': False, 'message': f'Lỗi server: {str(e)}', 'error_code': 500}), 500
 
 if __name__ == '__main__':
     print("Starting Face Recognition API Server...")

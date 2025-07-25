@@ -5,7 +5,7 @@ def encode_image_to_base64(path):
     with open(path, 'rb') as f:
         return base64.b64encode(f.read()).decode('utf-8')
 
-url = 'http://localhost:5002/api/encode'
+url = 'http://localhost:5002/api/face_vector_encode'
 
 payload = {
     "image_front": encode_image_to_base64("test/front.jpg"),
