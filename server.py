@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024 * 1024  # 64 MB
 # Cấu hình database - CẬP NHẬT
 DB_CONFIG = {
     'host': '172.16.33.4',
