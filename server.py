@@ -396,52 +396,61 @@ def encode_face_from_images():
             logger.warning("📭 Không có dữ liệu gửi lên (body rỗng hoặc sai định dạng).")
             return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
 
-        images_base64 = [
-            data.get('image_front'),
-            data.get('image_left'),
-            data.get('image_right'),
-        ]
-        directions = ['front', 'left', 'right']
 
-        # Kiểm tra thiếu từng ảnh cụ thể
-        missing = [directions[i] for i, img in enumerate(images_base64) if not img]
-        if missing:
-            logger.warning(f"❌ Thiếu ảnh đầu vào: {', '.join(missing)}.")
+        image_front = data.get('image_front')
+        image_left = data.get('image_left')
+        image_right = data.get('image_right')
+
+        # Nếu thiếu bất kỳ ảnh nào, chỉ xử lý mặt trước
+        if not (image_front and image_left and image_right):
+            logger.warning("⚠️ Không đủ 3 ảnh, chỉ xử lý ảnh mặt trước.")
+            if not image_front:
+                logger.warning("❌ Không có ảnh mặt trước.")
+                return jsonify({'success': False, 'message': 'Thiếu ảnh mặt trước (image_front)', 'error_code': 411}), 400
+            img = base64_to_image(image_front)
+            if img is None:
+                logger.warning("❌ Không đọc được ảnh mặt trước (base64 lỗi hoặc không phải ảnh).")
+                return jsonify({'success': False, 'message': 'Không đọc được ảnh mặt trước, vui lòng tải lại.', 'error_code': 412}), 400
+            logger.info(f"📏 Kích thước ảnh mặt trước: {img.shape}")
+            faces = face_app.get(img)
+            if not faces or faces[0].det_score < 0.7:
+                score = faces[0].det_score if faces else 0
+                logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh mặt trước (score: {score:.3f})")
+                return jsonify({'success': False, 'message': 'Không phát hiện khuôn mặt rõ ràng ở ảnh mặt trước, vui lòng tải lại.', 'error_code': 413}), 400
+            face = faces[0]
+            logger.info("✅ Ảnh mặt trước hợp lệ, đang lấy embedding...")
+            avg_vector = face.embedding
+            logger.info("✅ Đã lấy xong embedding từ ảnh mặt trước.")
             return jsonify({
-                'success': False,
-                'message': f"Thiếu dữ liệu ảnh: {', '.join(missing)}. Vui lòng gửi đủ 3 ảnh.",
-                'error_code': 410
-            }), 400
+                'success': True,
+                'vector': avg_vector.tolist(),
+                'fallback': True
+            }), 200
 
+        # Nếu đủ 3 ảnh, xử lý như cũ
         vectors = []
-        for idx, base64_str in enumerate(images_base64):
-            direction = directions[idx]
+        for idx, base64_str in enumerate([image_front, image_left, image_right]):
+            direction = ['front', 'left', 'right'][idx]
             logger.info(f"📥 Xử lý ảnh hướng: {direction.upper()}")
-
             img = base64_to_image(base64_str)
             if img is None:
                 logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh).")
                 return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
-
             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
-
             faces = face_app.get(img)
             if not faces or faces[0].det_score < 0.7:
                 score = faces[0].det_score if faces else 0
                 logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh {direction} (score: {score:.3f})")
                 return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 403}), 400
-
             face = faces[0]
             logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding...")
             vectors.append(face.embedding)
-
-        # Tính vector trung bình
         avg_vector = np.mean(vectors, axis=0)
         logger.info("✅ Đã tính xong vector trung bình.")
-
         return jsonify({
             'success': True,
-            'vector': avg_vector.tolist()
+            'vector': avg_vector.tolist(),
+            'fallback': False
         }), 200
 
     except Exception as e:
