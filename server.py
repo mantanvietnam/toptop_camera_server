@@ -413,13 +413,18 @@ def encode_face_from_images():
                 return jsonify({'success': False, 'message': 'Không đọc được ảnh mặt trước, vui lòng tải lại.', 'error_code': 412}), 400
             logger.info(f"📏 Kích thước ảnh mặt trước: {img.shape}")
             faces = face_app.get(img)
-            if not faces or faces[0].det_score < 0.7:
-                score = faces[0].det_score if faces else 0
-                logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh mặt trước (score: {score:.3f})")
-                return jsonify({'success': False, 'message': 'Không phát hiện khuôn mặt rõ ràng ở ảnh mặt trước, vui lòng tải lại.', 'error_code': 413}), 400
-            face = faces[0]
-            logger.info("✅ Ảnh mặt trước hợp lệ, đang lấy embedding...")
-            avg_vector = face.embedding
+            if not faces:
+                logger.warning("❌ Không phát hiện khuôn mặt ở ảnh mặt trước.")
+                return jsonify({'success': False, 'message': 'Không phát hiện khuôn mặt ở ảnh mặt trước, vui lòng tải lại.', 'error_code': 413}), 400
+
+            # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
+            largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+            if largest_face.det_score < 0.7:
+                logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ (score: {largest_face.det_score:.3f})")
+                return jsonify({'success': False, 'message': 'Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ, vui lòng tải lại.', 'error_code': 413}), 400
+
+            logger.info("✅ Ảnh mặt trước hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
+            avg_vector = largest_face.embedding
             logger.info("✅ Đã lấy xong embedding từ ảnh mặt trước.")
             return jsonify({
                 'success': True,
@@ -438,13 +443,18 @@ def encode_face_from_images():
                 return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
             faces = face_app.get(img)
-            if not faces or faces[0].det_score < 0.7:
-                score = faces[0].det_score if faces else 0
-                logger.warning(f"❌ Không phát hiện khuôn mặt rõ ở ảnh {direction} (score: {score:.3f})")
-                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt rõ ràng ở ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 403}), 400
-            face = faces[0]
-            logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding...")
-            vectors.append(face.embedding)
+            if not faces:
+                logger.warning(f"❌ Không phát hiện khuôn mặt ở ảnh {direction}.")
+                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt ở ảnh {direction}, vui lòng tải lại.', 'error_code': 403}), 400
+
+            # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
+            largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+            if largest_face.det_score < 0.7:
+                logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ (score: {largest_face.det_score:.3f})")
+                return jsonify({'success': False, 'message': f'Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ, vui lòng tải lại.', 'error_code': 403}), 400
+
+            logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
+            vectors.append(largest_face.embedding)
         avg_vector = np.mean(vectors, axis=0)
         logger.info("✅ Đã tính xong vector trung bình.")
         return jsonify({
