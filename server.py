@@ -387,80 +387,136 @@ def encode_face_from_images_get():
         'error_code': 405
     }), 405
 
+# @app.route('/api/face_vector_encode', methods=['POST'])
+# def encode_face_from_images():
+#     """API nhận 3 ảnh base64 và trả về vector trung bình nếu hợp lệ"""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             logger.warning("📭 Không có dữ liệu gửi lên (body rỗng hoặc sai định dạng).")
+#             return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
+
+
+#         image_front = data.get('image_front')
+#         image_left = data.get('image_left')
+#         image_right = data.get('image_right')
+
+#         # Nếu thiếu bất kỳ ảnh nào, chỉ xử lý mặt trước
+#         if not (image_front and image_left and image_right):
+#             logger.warning("⚠️ Không đủ 3 ảnh, chỉ xử lý ảnh mặt trước.")
+#             if not image_front:
+#                 logger.warning("❌ Không có ảnh mặt trước.")
+#                 return jsonify({'success': False, 'message': 'Thiếu ảnh mặt trước (image_front)', 'error_code': 411}), 400
+#             img = base64_to_image(image_front)
+#             if img is None:
+#                 logger.warning("❌ Không đọc được ảnh mặt trước (base64 lỗi hoặc không phải ảnh).")
+#                 return jsonify({'success': False, 'message': 'Không đọc được ảnh mặt trước, vui lòng tải lại.', 'error_code': 412}), 400
+#             logger.info(f"📏 Kích thước ảnh mặt trước: {img.shape}")
+#             faces = face_app.get(img)
+#             if not faces:
+#                 logger.warning("❌ Không phát hiện khuôn mặt ở ảnh mặt trước.")
+#                 return jsonify({'success': False, 'message': 'Không phát hiện khuôn mặt ở ảnh mặt trước, vui lòng tải lại.', 'error_code': 413}), 400
+
+#             # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
+#             largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+#             if largest_face.det_score < 0.7:
+#                 logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ (score: {largest_face.det_score:.3f})")
+#                 return jsonify({'success': False, 'message': 'Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ, vui lòng tải lại.', 'error_code': 413}), 400
+
+#             logger.info("✅ Ảnh mặt trước hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
+#             avg_vector = largest_face.embedding
+#             logger.info("✅ Đã lấy xong embedding từ ảnh mặt trước.")
+#             return jsonify({
+#                 'success': True,
+#                 'vector': avg_vector.tolist(),
+#                 'fallback': True
+#             }), 200
+
+#         # Nếu đủ 3 ảnh, xử lý như cũ
+#         vectors = []
+#         for idx, base64_str in enumerate([image_front, image_left, image_right]):
+#             direction = ['front', 'left', 'right'][idx]
+#             logger.info(f"📥 Xử lý ảnh hướng: {direction.upper()}")
+#             img = base64_to_image(base64_str)
+#             if img is None:
+#                 logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh).")
+#                 return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
+#             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
+#             faces = face_app.get(img)
+#             if not faces:
+#                 logger.warning(f"❌ Không phát hiện khuôn mặt ở ảnh {direction}.")
+#                 return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt ở ảnh {direction}, vui lòng tải lại.', 'error_code': 403}), 400
+
+#             # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
+#             largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+#             if largest_face.det_score < 0.7:
+#                 logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ (score: {largest_face.det_score:.3f})")
+#                 return jsonify({'success': False, 'message': f'Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ, vui lòng tải lại.', 'error_code': 403}), 400
+
+#             logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
+#             vectors.append(largest_face.embedding)
+#         avg_vector = np.mean(vectors, axis=0)
+#         logger.info("✅ Đã tính xong vector trung bình.")
+#         return jsonify({
+#             'success': True,
+#             'vector': avg_vector.tolist(),
+#             'fallback': False
+#         }), 200
+
+#     except Exception as e:
+#         logger.exception(f"🔥 Lỗi encode face: {e}")
+#         return jsonify({'success': False, 'message': f'Lỗi server: {str(e)}', 'error_code': 500}), 500
+
 @app.route('/api/face_vector_encode', methods=['POST'])
 def encode_face_from_images():
-    """API nhận 3 ảnh base64 và trả về vector trung bình nếu hợp lệ"""
+    """API nhận 1-3 ảnh base64 và trả về vector trung bình các mặt hợp lệ"""
     try:
         data = request.get_json()
         if not data:
             logger.warning("📭 Không có dữ liệu gửi lên (body rỗng hoặc sai định dạng).")
             return jsonify({'success': False, 'message': 'Không có dữ liệu gửi lên', 'error_code': 400}), 400
 
+        images = [
+            ('front', data.get('image_front')),
+            ('left', data.get('image_left')),
+            ('right', data.get('image_right'))
+        ]
 
-        image_front = data.get('image_front')
-        image_left = data.get('image_left')
-        image_right = data.get('image_right')
-
-        # Nếu thiếu bất kỳ ảnh nào, chỉ xử lý mặt trước
-        if not (image_front and image_left and image_right):
-            logger.warning("⚠️ Không đủ 3 ảnh, chỉ xử lý ảnh mặt trước.")
-            if not image_front:
-                logger.warning("❌ Không có ảnh mặt trước.")
-                return jsonify({'success': False, 'message': 'Thiếu ảnh mặt trước (image_front)', 'error_code': 411}), 400
-            img = base64_to_image(image_front)
-            if img is None:
-                logger.warning("❌ Không đọc được ảnh mặt trước (base64 lỗi hoặc không phải ảnh).")
-                return jsonify({'success': False, 'message': 'Không đọc được ảnh mặt trước, vui lòng tải lại.', 'error_code': 412}), 400
-            logger.info(f"📏 Kích thước ảnh mặt trước: {img.shape}")
-            faces = face_app.get(img)
-            if not faces:
-                logger.warning("❌ Không phát hiện khuôn mặt ở ảnh mặt trước.")
-                return jsonify({'success': False, 'message': 'Không phát hiện khuôn mặt ở ảnh mặt trước, vui lòng tải lại.', 'error_code': 413}), 400
-
-            # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
-            largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
-            if largest_face.det_score < 0.7:
-                logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ (score: {largest_face.det_score:.3f})")
-                return jsonify({'success': False, 'message': 'Khuôn mặt lớn nhất ở ảnh mặt trước không đủ rõ, vui lòng tải lại.', 'error_code': 413}), 400
-
-            logger.info("✅ Ảnh mặt trước hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
-            avg_vector = largest_face.embedding
-            logger.info("✅ Đã lấy xong embedding từ ảnh mặt trước.")
-            return jsonify({
-                'success': True,
-                'vector': avg_vector.tolist(),
-                'fallback': True
-            }), 200
-
-        # Nếu đủ 3 ảnh, xử lý như cũ
         vectors = []
-        for idx, base64_str in enumerate([image_front, image_left, image_right]):
-            direction = ['front', 'left', 'right'][idx]
-            logger.info(f"📥 Xử lý ảnh hướng: {direction.upper()}")
+        used_directions = []
+        for direction, base64_str in images:
+            if not base64_str:
+                logger.warning(f"⚠️ Thiếu ảnh {direction}, bỏ qua.")
+                continue
             img = base64_to_image(base64_str)
             if img is None:
-                logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh).")
-                return jsonify({'success': False, 'message': f'Không đọc được ảnh thứ {idx+1} ({direction}), vui lòng tải lại.', 'error_code': 402}), 400
+                logger.warning(f"❌ Không đọc được ảnh {direction} (base64 lỗi hoặc không phải ảnh), bỏ qua.")
+                continue
             logger.info(f"📏 Kích thước ảnh {direction}: {img.shape}")
             faces = face_app.get(img)
             if not faces:
-                logger.warning(f"❌ Không phát hiện khuôn mặt ở ảnh {direction}.")
-                return jsonify({'success': False, 'message': f'Không phát hiện khuôn mặt ở ảnh {direction}, vui lòng tải lại.', 'error_code': 403}), 400
-
-            # Chọn khuôn mặt lớn nhất (diện tích bbox lớn nhất)
+                logger.warning(f"❌ Không phát hiện khuôn mặt ở ảnh {direction}, bỏ qua.")
+                continue
             largest_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
             if largest_face.det_score < 0.7:
-                logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ (score: {largest_face.det_score:.3f})")
-                return jsonify({'success': False, 'message': f'Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ, vui lòng tải lại.', 'error_code': 403}), 400
-
+                logger.warning(f"❌ Khuôn mặt lớn nhất ở ảnh {direction} không đủ rõ (score: {largest_face.det_score:.3f}), bỏ qua.")
+                continue
             logger.info(f"✅ Ảnh {direction.upper()} hợp lệ, đang lấy embedding khuôn mặt lớn nhất...")
             vectors.append(largest_face.embedding)
+            used_directions.append(direction)
+
+        if not vectors:
+            return jsonify({'success': False, 'message': 'Không có ảnh hợp lệ nào để lấy embedding.', 'error_code': 420}), 400
+
         avg_vector = np.mean(vectors, axis=0)
-        logger.info("✅ Đã tính xong vector trung bình.")
+        logger.info(f"✅ Đã tính xong vector trung bình từ {len(vectors)} ảnh hợp lệ: {used_directions}")
+
         return jsonify({
             'success': True,
             'vector': avg_vector.tolist(),
-            'fallback': False
+            'num_images_used': len(vectors),
+            'used_directions': used_directions,
+            'fallback': len(vectors) < 3
         }), 200
 
     except Exception as e:
